@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>活动配置管理</title><link rel="stylesheet" href="./management.css"/></head>
+<body>
+  <header class="topbar"><div class="brand">出行营销活动管理后台</div><div class="env">原型预览 · 汽车票复购返现</div></header>
+  <div class="shell">
+    <aside class="side"><div class="side-title">汽车票营销</div><a class="active" href="./activity-list.html">活动配置管理</a><a href="./index.html">新建活动</a><a href="./participation-data.html">参与数据</a></aside>
+    <main class="page">
+      <div class="breadcrumb"><b>汽车票营销</b><span>›</span>活动配置管理</div>
+      <section class="card">
+        <div class="card-header">查询条件</div>
+        <div class="card-body">
+          <div class="filters">
+            <div class="field"><label>活动名称</label><input id="qName" type="text" placeholder="支持模糊查询"/></div>
+            <div class="field"><label>活动Code</label><input id="qCode" type="text" placeholder="请输入活动唯一标识"/></div>
+            <div class="field"><label>活动状态</label><select id="qStatus"><option value="">全部</option><option>有效</option><option>无效</option></select></div>
+          </div>
+          <div class="actions"><button id="resetBtn" type="button">重置</button><button id="searchBtn" class="primary" type="button">查询</button></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-header"><span>活动配置</span><a class="button primary" href="./index.html">＋ 新增活动</a></div>
+        <div class="card-body">
+          <div class="toolbar"><span id="countText" class="muted"></span><span class="muted">同一Tag：优先级越大越优先；相同时更新时间越近越优先</span></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>活动Code</th><th>活动名称</th><th>状态</th><th>优先级</th><th>投放时间</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="activityBody"></tbody></table>
+          </div>
+          <div id="empty" class="empty hidden">未查询到符合条件的活动</div>
+          <div class="pager">原型展示全部查询结果</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="detailModal" class="modal-mask hidden"><section class="modal"><header class="modal-header"><span id="modalTitle">操作日志</span><button class="close" id="closeModal" type="button">×</button></header><div id="detailBody" class="modal-body"></div></section></div>
+  <script src="./activity-defaults.js"></script>
+  <script>
+    const $=s=>document.querySelector(s); const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const sanitizeRichText=html=>{const template=document.createElement('template');template.innerHTML=String(html||'');const allowed=new Set(['P','DIV','BR','B','STRONG','I','EM','U','UL','OL','LI']);const clean=node=>{if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent);if(node.nodeType!==Node.ELEMENT_NODE||['SCRIPT','STYLE','IFRAME'].includes(node.tagName))return document.createDocumentFragment();const result=allowed.has(node.tagName)?document.createElement(node.tagName.toLowerCase()):document.createDocumentFragment();node.childNodes.forEach(child=>result.appendChild(clean(child)));return result;};const result=document.createElement('div');template.content.childNodes.forEach(node=>result.appendChild(clean(node)));return result.innerHTML;};
+    const defaults=window.busSecondCashbackDefaults;
+    const saved=JSON.parse(localStorage.getItem('busSecondCashbackActivities')||'[]');
+    const merged=[...saved,...defaults.filter(d=>!saved.some(s=>s.code===d.code))]; let visible=[...merged];
+    const fmt=v=>v?String(v).replace('T',' '):'-';
+    function render(){
+      $('#activityBody').innerHTML=visible.map(a=>`<tr><td>${esc(a.code)}</td><td>${esc(a.name)}</td><td><span class="status ${a.status==='有效'?'success':'default'}">${esc(a.status)}</span></td><td>${esc(a.priority)}</td><td>${fmt(a.beginAt)}<br/>至 ${fmt(a.endAt)}</td><td>${esc(a.updatedAt)}</td><td><div class="row-actions"><button class="link-btn view" data-code="${esc(a.code)}" type="button">查看</button><button class="link-btn edit" data-code="${esc(a.code)}" type="button">编辑</button><button class="link-btn logs" data-code="${esc(a.code)}" type="button">日志</button><button class="link-btn copy" data-code="${esc(a.code)}" type="button">复制</button></div></td></tr>`).join('');
+      $('#countText').textContent=`共 ${visible.length} 条活动配置`; $('#empty').classList.toggle('hidden',visible.length>0); document.querySelector('.table-wrap').classList.toggle('hidden',visible.length===0);
+      document.querySelectorAll('.view').forEach(btn=>btn.addEventListener('click',()=>{window.location.href=`./index.html?mode=view&code=${encodeURIComponent(btn.dataset.code)}`;}));
+      document.querySelectorAll('.edit').forEach(btn=>btn.addEventListener('click',()=>{window.location.href=`./index.html?mode=edit&code=${encodeURIComponent(btn.dataset.code)}`;}));
+      document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{window.location.href=`./index.html?mode=copy&code=${encodeURIComponent(btn.dataset.code)}`;}));
+      document.querySelectorAll('.logs').forEach(btn=>btn.addEventListener('click',()=>openLogs(btn.dataset.code)));
+    }
+    function search(){const name=$('#qName').value.trim().toLowerCase(),code=$('#qCode').value.trim().toLowerCase(),status=$('#qStatus').value;visible=merged.filter(a=>(!name||a.name.toLowerCase().includes(name))&&(!code||a.code.toLowerCase().includes(code))&&(!status||a.status===status));render();}
+    function openLogs(code){
+      const logs=JSON.parse(localStorage.getItem('busSecondCashbackActivityLogs')||'[]').filter(item=>item.code===code).reverse();
+      $('#modalTitle').textContent=`操作日志 · ${code}`;
+      $('#detailBody').innerHTML=logs.length?`<div class="table-wrap"><table style="min-width:760px"><thead><tr><th>操作时间</th><th>操作类型</th><th>操作人</th><th>变更内容</th></tr></thead><tbody>${logs.map(item=>`<tr><td>${esc(item.at)}</td><td>${esc(item.action)}</td><td>${esc(item.operator)}</td><td style="white-space:normal;min-width:280px">${item.detail?`<div>${esc(item.detail)}</div>`:''}${item.changes?.length?item.changes.map(change=>`<div>${esc(change.field)}：${esc(change.before)} → ${esc(change.after)}</div>`).join(''):(item.detail?'':'-')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">暂无日志</div>';
+      $('#detailModal').classList.remove('hidden');
+    }
+    function openDetail(code){const a=merged.find(x=>x.code===code);if(!a)return;const channelNames={852:"微信主小程序",434:"同程APP安卓",433:"同程APP IOS",10212:"鸿蒙APP"};const channelText=a.channels?.length?a.channels.map(code=>`${esc(channelNames[code]||code)}（${esc(code)}）`).join("；"):"未配置（历史示例）";const tagLimitEnabled=a.deliveryLimits?.tagEnabled??(a.tags||[]).length>0;const tagLimitText=tagLimitEnabled?(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join(''):'未限制';const abLimitEnabled=a.deliveryLimits?.abEnabled??false;const abLimitText=abLimitEnabled?`${esc(a.deliveryLimits.experimentCode)} / ${esc(a.deliveryLimits.experimentGroup)}`:'未限制';const countLimitDimensions=a.countLimits?(a.countLimits.enabled?a.countLimits.dimensions||[]:[]):(a.monthlyLimit!=null?[{type:'MONTHLY_PER_USER',value:a.monthlyLimit}]:[]);const monthlyDimension=countLimitDimensions.find(item=>item.type==='MONTHLY_PER_USER');const countLimitText=monthlyDimension?`每人每月 ${esc(monthlyDimension.value)} 次（不走快照）`:'未配置';$('#detailBody').innerHTML=`<dl class="detail-grid"><div class="detail-item"><dt>活动Code</dt><dd>${esc(a.code)}</dd></div><div class="detail-item"><dt>活动名称</dt><dd>${esc(a.name)}</dd></div><div class="detail-item"><dt>状态</dt><dd>${esc(a.status)}</dd></div><div class="detail-item"><dt>优先级</dt><dd>${esc(a.priority)}</dd></div><div class="detail-item"><dt>渠道限制</dt><dd>${channelText}</dd></div><div class="detail-item"><dt>产品Tag</dt><dd>${tagLimitText}</dd></div><div class="detail-item"><dt>AB实验分组</dt><dd>${abLimitText}</dd></div><div class="detail-item"><dt>次数限制</dt><dd>${countLimitText}</dd></div><div class="detail-item"><dt>资格有效期</dt><dd>${esc(a.validHours)}小时</dd></div><div class="detail-item"><dt>返现比例</dt><dd>${esc(a.cashbackRatio??100)}%</dd></div><div class="detail-item"><dt>返现上限</dt><dd>${esc(a.cashbackCap)}元</dd></div><div class="detail-item"><dt>礼包名称</dt><dd>${a.giftName?esc(a.giftName):"未配置（历史记录）"}</dd></div><div class="detail-item"><dt>礼包说明</dt><dd>${a.giftDescription?esc(a.giftDescription):"未配置（历史记录）"}</dd></div><div class="detail-item"><dt>礼包价值</dt><dd>${a.couponPackageValue!=null?`${esc(a.couponPackageValue)}元`:"未配置（历史记录）"}</dd></div><div class="detail-item"><dt>礼包发券活动</dt><dd>${esc(a.couponActivity)}</dd></div><div class="detail-item"><dt>返现金活动</dt><dd>${esc(a.cashbackActivity)}</dd></div><div class="detail-item"><dt>弹窗活动文案</dt><dd>${a.popupActivityText?esc(a.popupActivityText):"未配置"}</dd></div></dl><div class="section-title">分次领取配置</div><div class="table-wrap"><table style="min-width:600px"><thead><tr><th>期次</th><th>比例</th><th>领取时间</th></tr></thead><tbody>${(a.installments||[]).map((r,i)=>`<tr><td>第${i+1}期</td><td>${r.ratio}%</td><td>出行时刻＋${r.start*24}小时（含）至出行时刻＋${(r.end+1)*24}小时（不含）</td></tr>`).join('')}</tbody></table></div><div class="section-title">规则说明</div><div class="rich-text-content">${a.ruleDescription?sanitizeRichText(a.ruleDescription):'<span class="muted">未配置</span>'}</div>`;$('#detailModal').classList.remove('hidden');}
+    $('#searchBtn').addEventListener('click',search);$('#resetBtn').addEventListener('click',()=>{['#qName','#qCode'].forEach(s=>$(s).value='');$('#qStatus').value='';visible=[...merged];render();});$('#closeModal').addEventListener('click',()=>$('#detailModal').classList.add('hidden'));$('#detailModal').addEventListener('click',e=>{if(e.target.id==='detailModal')$('#detailModal').classList.add('hidden');});render();
+  </script>
+</body></html>

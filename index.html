@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>汽车票复购返现活动配置</title>
+  <style>
+    :root {
+      --blue: #409eff;
+      --blue-light: #ecf5ff;
+      --green: #67c23a;
+      --red: #f56c6c;
+      --orange: #e6a23c;
+      --text: #303133;
+      --regular: #606266;
+      --secondary: #909399;
+      --line: #dcdfe6;
+      --line-light: #ebeef5;
+      --bg: #f5f7fa;
+      --label: 180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+    }
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      height: 54px; padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      color: #fff; background: #263445; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+    }
+    .brand { font-size: 16px; font-weight: 600; }
+    .env { color: #c7d0db; font-size: 12px; }
+    .shell { min-height: calc(100vh - 54px); display: grid; grid-template-columns: 220px minmax(0,1fr); }
+    .side {
+      position: sticky; top: 54px; align-self: start; height: calc(100vh - 54px);
+      padding: 18px 12px; background: #fff; border-right: 1px solid var(--line-light);
+    }
+    .side-title { padding: 8px 12px 12px; color: var(--secondary); font-size: 12px; }
+    .side a { display: block; padding: 12px 14px; color: var(--regular); text-decoration: none; border-radius: 4px; }
+    .side a.active { color: var(--blue); background: var(--blue-light); font-weight: 600; }
+    .layout {
+      width: min(1400px, calc(100% - 40px)); margin: 22px auto 70px;
+      display: grid; grid-template-columns: minmax(0,1fr) 230px; gap: 20px; align-items: start;
+    }
+    .breadcrumb { margin: 2px 0 18px; color: var(--secondary); }
+    .breadcrumb b { color: var(--regular); font-weight: 500; }
+    .breadcrumb span { margin: 0 9px; color: #c0c4cc; }
+    .card {
+      margin-bottom: 18px; background: #fff; border: 1px solid var(--line-light);
+      border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.035); overflow: hidden;
+    }
+    .card.changed { border-color: #a9d2ff; }
+    .card-header {
+      min-height: 54px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--line-light); font-size: 15px; font-weight: 600;
+    }
+    .badge { padding: 3px 9px; color: var(--blue); background: var(--blue-light); border: 1px solid #b3d8ff; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .card-body { padding: 24px 24px 8px; }
+    .form-row {
+      min-height: 40px; margin-bottom: 20px;
+      display: grid; grid-template-columns: var(--label) minmax(0,1fr); gap: 14px; align-items: start;
+    }
+    .label { padding-top: 9px; text-align: right; color: var(--regular); line-height: 20px; }
+    .required::before { content: "*"; color: var(--red); margin-right: 4px; }
+    .control { min-width: 0; }
+    .inline { min-height: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    input[type="text"], input[type="number"], input[type="datetime-local"], select, textarea {
+      width: 420px; max-width: 100%; min-height: 36px; padding: 8px 12px;
+      color: var(--regular); background: #fff; border: 1px solid var(--line); border-radius: 4px;
+      outline: none; font: inherit; transition: .15s;
+    }
+    input[type="number"] { width: 180px; }
+    #validHours, #cashbackCap, #cashbackCapConfirm { width: 180px; }
+    .money-chinese { color: #3a78b8; }
+    input[type="datetime-local"] { width: 240px; }
+    textarea { min-height: 88px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(64,158,255,.12); }
+    .read-only input:disabled, .read-only select:disabled { color: var(--regular); background: #f5f7fa; opacity: 1; cursor: default; }
+    .read-only .rich-text-editor { background: #f5f7fa; }
+    input::placeholder, textarea::placeholder { color: #c0c4cc; }
+    .radio, .checkbox { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; margin-right: 12px; }
+    .radio input, .checkbox input { accent-color: var(--blue); width: 16px; height: 16px; margin: 0; }
+    .tip { margin-top: 6px; color: var(--secondary); font-size: 12px; line-height: 1.65; }
+    .tip.info::before { content: "ⓘ"; margin-right: 5px; color: var(--blue); }
+    .unit { color: var(--regular); }
+    .note {
+      margin: 0 0 20px calc(var(--label) + 14px); padding: 10px 14px;
+      color: #5f6f82; background: #f4f9ff; border-left: 3px solid var(--blue); line-height: 1.7;
+    }
+    .warning { background: #fdf6ec; border-left-color: var(--orange); color: #7a5b23; }
+    .conditional { margin: 0 0 20px calc(var(--label) + 14px); padding: 18px 18px 2px 0; background: #fbfdff; border: 1px solid #e2efff; border-radius: 4px; }
+    .conditional .form-row { grid-template-columns: calc(var(--label) - 14px) minmax(0,1fr); }
+    .hidden { display: none !important; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tag { padding: 4px 9px; color: #3a78b8; background: var(--blue-light); border: 1px solid #b3d8ff; border-radius: 3px; font-size: 12px; }
+    .rich-text { width: 100%; max-width: 580px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    .rich-text-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; background: #fafafa; border-bottom: 1px solid var(--line-light); }
+    .rich-text-toolbar button { min-width: 36px; height: 30px; padding: 0 8px; }
+    .rich-text-editor { min-height: 140px; padding: 10px 12px; line-height: 1.7; outline: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .rich-text-editor:focus { box-shadow: inset 0 0 0 1px var(--blue); }
+    .rich-text-editor:empty::before { content: attr(data-placeholder); color: #c0c4cc; pointer-events: none; }
+    .table-wrap { margin: 0 0 16px calc(var(--label) + 14px); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 12px 10px; border: 1px solid var(--line-light); text-align: left; white-space: nowrap; }
+    th { color: var(--regular); background: #fafafa; font-weight: 500; }
+    td input[type="number"] { width: 110px; }
+    .ratio-status { margin-left: 10px; font-weight: 600; }
+    .ratio-status.ok { color: var(--green); }
+    .ratio-status.bad { color: var(--red); }
+    button {
+      min-width: 82px; height: 34px; padding: 0 16px; color: var(--regular); background: #fff;
+      border: 1px solid var(--line); border-radius: 4px; cursor: pointer; font: inherit;
+    }
+    button:hover { color: var(--blue); border-color: #c6e2ff; background: var(--blue-light); }
+    button.primary { color: #fff; background: var(--blue); border-color: var(--blue); }
+    button.danger { min-width: 50px; color: var(--red); border-color: #fbc4c4; }
+    button.link { min-width: 0; height: auto; padding: 0; color: var(--blue); border: 0; background: transparent; }
+    .outline { position: sticky; top: 76px; padding: 14px 0; background: #fff; border: 1px solid var(--line-light); border-radius: 4px; }
+    .outline-title { padding: 0 16px 10px; border-bottom: 1px solid var(--line-light); font-weight: 600; }
+    .outline a { display: block; padding: 9px 16px; color: var(--regular); text-decoration: none; border-left: 3px solid transparent; }
+    .outline a:hover { color: var(--blue); background: var(--blue-light); border-left-color: var(--blue); }
+    .footer {
+      position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: center; gap: 16px;
+      padding: 18px; background: rgba(255,255,255,.96); border-top: 1px solid var(--line-light);
+      box-shadow: 0 -3px 10px rgba(0,0,0,.04); backdrop-filter: blur(8px);
+    }
+    .toast {
+      position: fixed; left: 50%; top: 72px; z-index: 50; transform: translate(-50%,-12px);
+      padding: 11px 18px; color: #fff; background: rgba(34,34,34,.9); border-radius: 4px;
+      opacity: 0; pointer-events: none; transition: .2s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%,0); }
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line-light); }
+      .layout { width: calc(100% - 24px); grid-template-columns: 1fr; }
+      .outline { display: none; }
+      :root { --label: 138px; }
+    }
+    @media (max-width: 620px) {
+      .form-row { grid-template-columns: 1fr; gap: 6px; }
+      .label { padding-top: 0; text-align: left; }
+      .note, .conditional, .table-wrap { margin-left: 0; }
+      .conditional .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">出行营销活动管理后台</div>
+    <div class="env">原型预览 · 汽车票复购返现</div>
+  </header>
+  <div class="shell">
+    <aside class="side">
+      <div class="side-title">汽车票营销</div>
+      <a href="./activity-list.html">活动配置管理</a>
+      <a class="active" href="./index.html">新建活动</a>
+      <a href="./participation-data.html">参与数据</a>
+    </aside>
+    <div>
+      <div class="layout">
+        <main>
+          <div class="breadcrumb"><b>汽车票营销</b><span>›</span>复购返现活动<span>›</span><span id="pageMode">新建</span></div>
+          <form id="activityForm" novalidate>
+            <div id="readOnlyNote" class="note hidden" style="margin-left:0">当前为活动查看模式，全部配置不可修改。</div>
+            <section class="card" id="base">
+              <div class="card-header">基础信息</div>
+              <div class="card-body">
+                <div id="activityCodeRow" class="form-row hidden"><label class="label">活动Code</label><div class="control"><input id="activityCode" type="text" readonly /></div></div>
+                <div class="form-row"><label class="label required">活动名称</label><div class="control"><input id="actName" type="text" maxlength="40" placeholder="请输入活动名称" /></div></div>
+                <div class="form-row"><label class="label required">业务类型</label><div class="control inline"><label class="radio"><input type="radio" checked />汽车票</label></div></div>
+                <div class="form-row"><label class="label required">渠道限制</label><div class="control inline"><label class="checkbox"><input name="channels" type="checkbox" value="852" />微信主小程序（852）</label><label class="checkbox"><input name="channels" type="checkbox" value="434" />同程APP安卓（434）</label><label class="checkbox"><input name="channels" type="checkbox" value="433" />同程APP IOS（433）</label><label class="checkbox"><input name="channels" type="checkbox" value="10212" />鸿蒙APP（10212）</label></div></div>
+                <div class="form-row"><label class="label required">优先级</label><div class="control inline"><input id="priority" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,3}" maxlength="4" value="100" aria-label="优先级，1到9999的整数" /><span>1～9999 的整数；数值越大优先级越高</span></div></div>
+                <div class="form-row"><label class="label required">活动投放时间</label><div class="control inline"><input id="beginAt" type="datetime-local" /><span>至</span><input id="endAt" type="datetime-local" /></div></div>
+                <div class="form-row"><label class="label required">活动状态</label><div class="control inline"><label class="radio"><input name="status" type="radio" checked />有效</label><label class="radio"><input name="status" type="radio" />无效</label></div></div>
+              </div>
+            </section>
+
+            <section class="card changed" id="delivery">
+              <div class="card-header"><span>投放限制</span><span class="badge">新增/调整</span></div>
+              <div class="card-body">
+                <div class="form-row"><label class="label">投放限制</label><div class="control inline"><label class="checkbox"><input id="tagEnabled" type="checkbox" />产品Tag</label><label class="checkbox"><input id="abEnabled" type="checkbox" />AB实验分组</label></div></div>
+                <div id="tagFields" class="conditional hidden">
+                  <div class="form-row"><label class="label required">产品Tag</label><div class="control"><input id="productTags" type="text" maxlength="100" placeholder="例如：BUS_HOME,BUS_RETURN,汽车票频道" /><div class="tip info">输入内容合计最多100字符；支持配置多个Tag，以英文逗号分隔；完全匹配、区分大小写，保存时去除首尾空格并去重。</div><div id="tagPreview" class="tags"></div></div></div>
+                </div>
+                <div id="abFields" class="conditional hidden">
+                  <div class="form-row"><label class="label required">实验编号</label><div class="control inline"><input id="experimentCode" type="text" placeholder="请输入实验编号" /><button type="button" id="loadGroups">获取实验分组</button></div></div>
+                  <div class="form-row"><label class="label required">可参与分组</label><div class="control"><select id="experimentGroup"><option value="">请选择实验分组</option><option>A组</option><option>B组</option><option>实验组</option></select></div></div>
+                </div>
+                <div class="note">未选择的投放限制不参与资格校验；未配置产品Tag时，活动查询的Tag匹配口径待业务确认。</div>
+              </div>
+            </section>
+
+            <section class="card changed" id="countLimit">
+              <div class="card-header"><span>次数限制</span><span class="badge">新增</span></div>
+              <div class="card-body">
+                <div class="form-row"><label class="label">次数限制</label><div class="control inline"><label class="checkbox"><input id="monthlyLimitDimension" type="checkbox" />每人每月参与次数</label></div></div>
+                <div id="monthlyLimitFields" class="conditional hidden">
+                  <div class="form-row"><label class="label required">每人每月参与次数</label><div class="control inline"><input id="monthlyLimit" type="number" min="1" max="99" step="1" value="1" /><span>次</span></div></div>
+                </div>
+                <div class="note warning">次数限制非必填；不选择则不限制。次数限制不进入资格快照，第一单创单时按最新配置校验；第二单出行后扣减次数，归属第一单创建月份。</div>
+              </div>
+            </section>
+
+            <section class="card changed" id="qualification">
+              <div class="card-header"><span>二单资格配置</span><span class="badge">新增</span></div>
+              <div class="card-body">
+                <div class="form-row"><label class="label required">资格有效时长</label><div class="control inline"><span>第一单支付成功后</span><input id="validHours" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" value="24" aria-label="资格有效时长，1到999的整数小时" /><span>小时内创建第二单</span></div></div>
+                <div class="note">第一单创单生成待支付资格；支付成功后激活。第二单在有效期内创单即占用资格，占用后不再受原截止时间影响。</div>
+                <div class="form-row"><label class="label required">礼包名称</label><div class="control"><input id="giftName" type="text" placeholder="请输入1～10个字符" /></div></div>
+                <div class="form-row"><label class="label required">礼包说明</label><div class="control"><input id="giftDescription" type="text" placeholder="请输入1～100个字符" /></div></div>
+                <div class="form-row"><label class="label required">礼包价值</label><div class="control inline"><input id="couponPackageValue" type="number" min="1" max="999" step="1" placeholder="请输入1～999的整数" /><span>元</span></div></div>
+                <div class="form-row"><label class="label required">礼包发券活动</label><div class="control"><input id="couponActivity" type="text" placeholder="请输入营销平台领取活动Code" /><div class="tip info">一个领取活动可关联多张代金券。资格激活时调用一次；失败仅记录，不阻塞二单资格。</div></div></div>
+              </div>
+            </section>
+
+            <section class="card changed" id="cashback">
+              <div class="card-header"><span>返现配置</span><span class="badge">调整</span></div>
+              <div class="card-body">
+                <div class="form-row"><label class="label required">返现比例</label><div class="control inline"><input id="cashbackRatio" type="number" min="1" max="100" step="1" value="100" /><span>%</span></div></div>
+                <div class="form-row"><label class="label required">返现金额上限</label><div class="control inline"><input id="cashbackCap" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" value="30" aria-label="返现金额上限，1到500的整数元" /><span>元（1～500的整数）</span><span id="cashbackCapChinese" class="money-chinese" aria-live="polite"></span></div></div>
+                <div class="form-row" id="cashbackCapConfirmRow"><label class="label required">确认返现金额上限</label><div class="control"><div class="inline"><input id="cashbackCapConfirm" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" placeholder="请再次输入1～500的整数" aria-label="确认返现金额上限，1到500的整数元" /><span>元</span><span id="cashbackCapMatch" class="ratio-status" aria-live="polite"></span></div><div class="tip info">确认金额必须与返现金额上限一致，才允许保存。</div></div></div>
+                <div class="note">返现总金额＝min（⌊第二单票价 × 返现比例⌋，返现金额上限）。第二单票价由汽车票订单系统传入，计算结果按元向下取整。</div>
+                <div class="form-row"><label class="label required">返现金活动</label><div class="control"><input id="cashbackActivity" type="text" placeholder="请输入营销平台返现金活动Code" /><div class="tip info">用户每次主动领取一笔奖励，定制活动按当笔金额调用该返现金活动。请选择绑定动态金额现金商品的返现金活动Code。</div></div></div>
+              </div>
+            </section>
+
+            <section class="card changed" id="installments">
+              <div class="card-header"><span>分次领取配置</span><span class="badge">新增</span></div>
+              <div class="card-body">
+                <div class="note">每笔奖励以第二单出行时刻为基准，按连续24小时计算：第X天从出行后X×24小时开始（含），第Y天至出行后（Y＋1）×24小时结束（不含）。不同奖励的领取时间允许重叠，领取顺序互不影响。</div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>期次</th><th>返现比例</th><th>出行后第X天开始</th><th>出行后第Y天结束</th><th>操作</th></tr></thead>
+                    <tbody id="installmentBody"></tbody>
+                  </table>
+                </div>
+                <div class="form-row"><label class="label">比例校验</label><div class="control inline"><button type="button" id="addInstallment">＋ 添加一期</button><span id="ratioStatus" class="ratio-status"></span><span class="tip">最少1期，最多5期</span></div></div>
+                <div class="note warning">前N－1期按“返现总金额×比例”向下取整，不足1元则不生成；最后一期领取剩余全部金额。单期过期仅该期失效，不并入后续奖励。</div>
+              </div>
+            </section>
+
+            <section class="card" id="display">
+              <div class="card-header">前端展示配置</div>
+              <div class="card-body">
+                <div class="form-row"><label class="label">弹窗活动文案</label><div class="control"><input id="popupActivityText" type="text" maxlength="100" placeholder="请输入弹窗活动文案（非必填，最多100字符）" /></div></div>
+                <div class="form-row"><label class="label">规则说明</label><div class="control"><div class="rich-text"><div class="rich-text-toolbar" aria-label="规则说明格式工具栏"><button type="button" data-format="bold" title="加粗"><b>B</b></button><button type="button" data-format="italic" title="斜体"><i>I</i></button><button type="button" data-format="underline" title="下划线"><u>U</u></button><button type="button" data-format="insertUnorderedList" title="无序列表">• 列表</button><button type="button" data-format="insertOrderedList" title="有序列表">1. 列表</button></div><div id="ruleDescription" class="rich-text-editor" contenteditable="true" role="textbox" aria-label="规则说明" aria-multiline="true" data-placeholder="请输入活动规则说明（非必填）"></div></div><div class="tip info">支持加粗、斜体、下划线和列表；可不填写。</div></div></div>
+              </div>
+            </section>
+
+            <div class="footer"><button type="button" id="closeBtn">关闭</button><button class="primary" id="saveBtn" type="submit">确定</button></div>
+          </form>
+        </main>
+        <aside class="outline">
+          <div class="outline-title">页面模块</div>
+          <a href="#base">基础信息</a>
+          <a href="#delivery">投放限制</a>
+          <a href="#countLimit">次数限制</a>
+          <a href="#qualification">二单资格配置</a>
+          <a href="#cashback">返现配置</a>
+          <a href="#installments">分次领取配置</a>
+          <a href="#display">前端展示配置</a>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="./activity-defaults.js"></script>
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const toast = (text) => {
+      const el = $('#toast');
+      el.textContent = text;
+      el.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    };
+
+    const parseTags = () => {
+      const raw = $('#productTags').value;
+      return [...new Set(raw.split(',').map(tag => tag.trim()).filter(Boolean))];
+    };
+    const renderTags = () => {
+      $('#tagPreview').innerHTML = parseTags().map(tag => `<span class="tag">${tag.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`).join('');
+    };
+    $('#productTags').addEventListener('input', renderTags);
+    const sanitizeRichText = html => {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      const allowed = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI']);
+      const clean = node => {
+        if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent);
+        if (node.nodeType !== Node.ELEMENT_NODE || ['SCRIPT', 'STYLE', 'IFRAME'].includes(node.tagName)) return document.createDocumentFragment();
+        const result = allowed.has(node.tagName) ? document.createElement(node.tagName.toLowerCase()) : document.createDocumentFragment();
+        node.childNodes.forEach(child => result.appendChild(clean(child)));
+        return result;
+      };
+      const result = document.createElement('div');
+      template.content.childNodes.forEach(node => result.appendChild(clean(node)));
+      return result.innerHTML;
+    };
+    document.querySelectorAll('[data-format]').forEach(button => {
+      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('click', () => {
+        $('#ruleDescription').focus();
+        document.execCommand(button.dataset.format, false);
+      });
+    });
+    $('#ruleDescription').addEventListener('paste', event => {
+      event.preventDefault();
+      document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
+    });
+
+    $('#tagEnabled').addEventListener('change', event => {
+      $('#tagFields').classList.toggle('hidden', !event.target.checked);
+    });
+    $('#abEnabled').addEventListener('change', event => {
+      $('#abFields').classList.toggle('hidden', !event.target.checked);
+    });
+    $('#monthlyLimitDimension').addEventListener('change', event => {
+      $('#monthlyLimitFields').classList.toggle('hidden', !event.target.checked);
+    });
+    const bindIntegerInput = (selector, max, onChange = () => {}) => {
+      const input = $(selector);
+      let lastValid = input.value;
+      const integerPattern = new RegExp(`^[1-9][0-9]{0,${String(max).length - 1}}$`);
+      input.addEventListener('focus', () => { if (integerPattern.test(input.value) && Number(input.value) <= max) lastValid = input.value; });
+      input.addEventListener('input', () => {
+        if (input.value === '' || (integerPattern.test(input.value) && Number(input.value) <= max)) {
+          lastValid = input.value;
+        } else {
+          input.value = lastValid;
+        }
+        onChange();
+      });
+    };
+    const toChineseNumber = value => {
+      const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+      const hundreds = Math.floor(value / 100);
+      const tens = Math.floor(value % 100 / 10);
+      const units = value % 10;
+      let result = hundreds ? `${digits[hundreds]}百` : '';
+      if (hundreds && !tens && units) result += '零';
+      if (tens) result += tens === 1 && !hundreds ? '十' : `${digits[tens]}十`;
+      if (units) result += digits[units];
+      return result;
+    };
+    const updateCashbackCapDisplay = () => {
+      const cap = Number($('#cashbackCap').value);
+      $('#cashbackCapChinese').textContent = cap >= 1 && cap <= 500 ? `中文：${toChineseNumber(cap)}元` : '';
+      const confirmed = $('#cashbackCapConfirm').value;
+      const matches = confirmed !== '' && Number(confirmed) === cap && cap >= 1 && cap <= 500;
+      $('#cashbackCapMatch').textContent = confirmed === '' ? '' : matches ? '金额一致' : '金额不一致';
+      $('#cashbackCapMatch').className = `ratio-status ${matches ? 'ok' : 'bad'}`;
+    };
+    bindIntegerInput('#priority', 9999);
+    bindIntegerInput('#validHours', 999);
+    bindIntegerInput('#cashbackCap', 500, updateCashbackCapDisplay);
+    bindIntegerInput('#cashbackCapConfirm', 500, updateCashbackCapDisplay);
+    updateCashbackCapDisplay();
+    $('#loadGroups').addEventListener('click', () => {
+      if (!$('#experimentCode').value.trim()) return toast('请先填写实验编号');
+      toast('原型模式：实验分组获取成功');
+    });
+
+    const defaultRows = [
+      { ratio: 30, start: 1, end: 3 },
+      { ratio: 30, start: 4, end: 6 },
+      { ratio: 40, start: 7, end: 10 }
+    ];
+    let rows = defaultRows.map(item => ({...item}));
+
+    const updateRatioStatus = () => {
+      const total = rows.reduce((sum, row) => sum + Number(row.ratio || 0), 0);
+      const validRatios = rows.every(row => Number.isInteger(row.ratio) && row.ratio >= 1 && row.ratio <= 100);
+      const ok = total === 100 && validRatios;
+      $('#ratioStatus').textContent = `当前合计 ${total}%${ok ? '，校验通过' : '，需填写1～100的整数且合计100%'}`;
+      $('#ratioStatus').className = `ratio-status ${ok ? 'ok' : 'bad'}`;
+    };
+    const renderRows = () => {
+      $('#installmentBody').innerHTML = rows.map((row, index) => `
+        <tr>
+          <td>第${index + 1}期${index === rows.length - 1 ? '（最后一期）' : ''}</td>
+          <td><input data-index="${index}" data-key="ratio" class="row-input" type="number" min="1" max="100" step="1" value="${row.ratio ?? ''}" /> %</td>
+          <td><input data-index="${index}" data-key="start" class="row-input" type="number" min="0" max="99" step="1" value="${row.start ?? ''}" /> 天</td>
+          <td><input data-index="${index}" data-key="end" class="row-input" type="number" min="0" max="99" step="1" value="${row.end ?? ''}" /> 天</td>
+          <td><button class="danger remove-row" data-index="${index}" type="button" ${rows.length === 1 ? 'disabled' : ''}>删除</button></td>
+        </tr>`).join('');
+      document.querySelectorAll('.row-input').forEach(input => input.addEventListener('input', event => {
+        const index = Number(event.target.dataset.index);
+        rows[index][event.target.dataset.key] = event.target.value === '' ? null : Number(event.target.value);
+        updateRatioStatus();
+      }));
+      document.querySelectorAll('.remove-row').forEach(button => button.addEventListener('click', event => {
+        rows.splice(Number(event.currentTarget.dataset.index), 1);
+        renderRows();
+      }));
+      $('#addInstallment').disabled = rows.length >= 5;
+      updateRatioStatus();
+    };
+    $('#addInstallment').addEventListener('click', () => {
+      if (rows.length >= 5) return toast('最多配置5期奖励');
+      rows.push({ ratio: null, start: 0, end: 0 });
+      renderRows();
+    });
+    renderRows();
+
+    const requireText = (selector, message) => {
+      const el = $(selector);
+      if (!el.value.trim()) { toast(message); el.focus(); return false; }
+      return true;
+    };
+    const generateActivityCode = existingCodes => {
+      const now = new Date();
+      const timestamp = [now.getFullYear(), now.getMonth() + 1, now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map((value, index) => index === 0 ? String(value) : String(value).padStart(2, '0')).join('');
+      let code;
+      do {
+        code = `BUS_SECOND_CASHBACK_${timestamp}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      } while (existingCodes.has(code));
+      return code;
+    };
+    const formParams = new URLSearchParams(window.location.search);
+    const formMode = formParams.get('mode') || 'create';
+    const sourceCode = formParams.get('code');
+    const storedActivities = JSON.parse(localStorage.getItem('busSecondCashbackActivities') || '[]');
+    const sourceRecord = [...storedActivities, ...window.busSecondCashbackDefaults].find(item => item.code === sourceCode);
+    const auditConfig = item => {
+      const monthlyDimension = item.countLimits?.enabled ? item.countLimits.dimensions?.find(dimension => dimension.type === 'MONTHLY_PER_USER') : null;
+      return {
+        name: item.name || '', channels: item.channels || [], status: item.status || '', priority: item.priority,
+        beginAt: item.beginAt || '', endAt: item.endAt || '',
+        tagEnabled: item.deliveryLimits?.tagEnabled ?? (item.tags || []).length > 0, tags: item.tags || [],
+        abEnabled: item.deliveryLimits?.abEnabled ?? false,
+        experimentCode: item.deliveryLimits?.experimentCode || '', experimentGroup: item.deliveryLimits?.experimentGroup || '',
+        monthlyLimit: item.countLimits ? monthlyDimension?.value ?? null : item.monthlyLimit ?? null,
+        validHours: item.validHours, giftName: item.giftName || '', giftDescription: item.giftDescription || '',
+        couponPackageValue: item.couponPackageValue ?? null, couponActivity: item.couponActivity || '',
+        cashbackRatio: item.cashbackRatio ?? 100, cashbackCap: item.cashbackCap,
+        cashbackActivity: item.cashbackActivity || '', installments: item.installments || [],
+        popupActivityText: item.popupActivityText || '', ruleDescription: item.ruleDescription || ''
+      };
+    };
+    const auditLabels = {
+      name:'活动名称', channels:'渠道限制', status:'活动状态', priority:'优先级', beginAt:'投放开始时间', endAt:'投放结束时间',
+      tagEnabled:'产品Tag限制', tags:'产品Tag', abEnabled:'AB分组限制', experimentCode:'实验编号', experimentGroup:'可参与分组',
+      monthlyLimit:'每人每月参与次数', validHours:'资格有效时长', giftName:'礼包名称', giftDescription:'礼包说明',
+      couponPackageValue:'礼包价值', couponActivity:'礼包发券活动', cashbackRatio:'返现比例', cashbackCap:'返现金额上限',
+      cashbackActivity:'返现金活动', installments:'分次领取配置', popupActivityText:'弹窗活动文案', ruleDescription:'规则说明'
+    };
+    const auditValue = value => {
+      if (value == null || value === '') return '未配置';
+      if (Array.isArray(value)) return value.length ? value.map(item => typeof item === 'object' ? `${item.ratio}%／第${item.start}～${item.end}天` : item).join('；') : '未配置';
+      if (typeof value === 'boolean') return value ? '开启' : '关闭';
+      return String(value);
+    };
+    const configChanges = (before, after) => {
+      const previous = auditConfig(before), current = auditConfig(after);
+      return Object.keys(current).filter(key => JSON.stringify(previous[key]) !== JSON.stringify(current[key]))
+        .map(key => ({field: auditLabels[key], before: auditValue(previous[key]), after: auditValue(current[key])}));
+    };
+    const appendActivityLogs = entries => {
+      const logs = JSON.parse(localStorage.getItem('busSecondCashbackActivityLogs') || '[]');
+      logs.push(...entries);
+      localStorage.setItem('busSecondCashbackActivityLogs', JSON.stringify(logs));
+    };
+    $('#activityForm').addEventListener('submit', event => {
+      event.preventDefault();
+      if (formMode === 'view' || (formMode !== 'create' && !sourceRecord)) return toast('当前页面不可保存活动');
+      if (!requireText('#actName', '请填写活动名称')) return;
+      const channels = [...document.querySelectorAll('input[name="channels"]:checked')].map(input => input.value);
+      if (!channels.length) return toast('请至少选择一个渠道');
+      if (!Number.isInteger(Number($('#priority').value)) || Number($('#priority').value) < 1 || Number($('#priority').value) > 9999) return toast('优先级需为1～9999的整数');
+      if (!$('#beginAt').value || !$('#endAt').value || $('#beginAt').value >= $('#endAt').value) return toast('请填写正确的活动投放时间');
+      const tagLimitEnabled = $('#tagEnabled').checked;
+      const rawTags = $('#productTags').value;
+      if (tagLimitEnabled && !rawTags.trim()) return toast('请选择产品Tag后配置至少一个Tag');
+      if (tagLimitEnabled && [...rawTags].length > 100) return toast('产品Tag输入内容最多100字符');
+      if (tagLimitEnabled && rawTags.split(',').some(tag => !tag.trim())) return toast('产品Tag中存在空值，请检查逗号位置');
+      if ($('#abEnabled').checked && (!$('#experimentCode').value.trim() || !$('#experimentGroup').value)) return toast('请完善AB实验配置');
+      if ($('#monthlyLimitDimension').checked && (!Number.isInteger(Number($('#monthlyLimit').value)) || Number($('#monthlyLimit').value) < 1 || Number($('#monthlyLimit').value) > 99)) return toast('每人每月参与次数需为1～99的整数');
+      if (!Number.isInteger(Number($('#validHours').value)) || Number($('#validHours').value) < 1 || Number($('#validHours').value) > 999) return toast('资格有效时长需为1～999的整数小时');
+      const giftName = $('#giftName').value.trim();
+      const giftDescription = $('#giftDescription').value.trim();
+      if ([...giftName].length < 1 || [...giftName].length > 10) return toast('礼包名称需为1～10个字符');
+      if ([...giftDescription].length < 1 || [...giftDescription].length > 100) return toast('礼包说明需为1～100个字符');
+      if (!Number.isInteger(Number($('#couponPackageValue').value)) || Number($('#couponPackageValue').value) < 1 || Number($('#couponPackageValue').value) > 999) return toast('礼包价值需为1～999的整数');
+      if (!requireText('#couponActivity', '请填写礼包发券活动Code')) return;
+      if (!Number.isInteger(Number($('#cashbackRatio').value)) || Number($('#cashbackRatio').value) < 1 || Number($('#cashbackRatio').value) > 100) return toast('返现比例需为1～100的整数');
+      if (!Number.isInteger(Number($('#cashbackCap').value)) || Number($('#cashbackCap').value) < 1 || Number($('#cashbackCap').value) > 500) return toast('返现金额上限需为1～500的整数');
+      if (!Number.isInteger(Number($('#cashbackCapConfirm').value)) || Number($('#cashbackCapConfirm').value) < 1 || Number($('#cashbackCapConfirm').value) > 500) return toast('请填写1～500的整数作为返现金额上限确认值');
+      if (Number($('#cashbackCapConfirm').value) !== Number($('#cashbackCap').value)) return toast('确认返现金额上限与返现金额上限不一致');
+      if (!requireText('#cashbackActivity', '请填写返现金活动Code')) return;
+      if (rows.length < 1 || rows.length > 5) return toast('分次领取期数需为1～5期');
+      if ([...$('#popupActivityText').value.trim()].length > 100) return toast('弹窗活动文案最多100字符');
+      for (let i = 0; i < rows.length; i += 1) {
+        const row = rows[i];
+        if (!Number.isInteger(row.ratio) || row.ratio < 1 || row.ratio > 100) return toast(`第${i + 1}期返现比例需为1～100的整数`);
+        if (!Number.isInteger(row.start) || row.start < 0 || row.start > 99 || !Number.isInteger(row.end) || row.end < 0 || row.end > 99 || row.end < row.start) return toast(`第${i + 1}期领取开始和结束时间需为0～99的整数，且结束不早于开始`);
+      }
+      const ratioTotal = rows.reduce((sum, row) => sum + Number(row.ratio || 0), 0);
+      if (ratioTotal !== 100) return toast('分次返现比例之和必须为100%');
+      const saved = JSON.parse(localStorage.getItem('busSecondCashbackActivities') || '[]');
+      const monthlyLimitEnabled = $('#monthlyLimitDimension').checked;
+      const countLimitDimensions = [];
+      if (monthlyLimitEnabled) countLimitDimensions.push({type: 'MONTHLY_PER_USER', value: Number($('#monthlyLimit').value)});
+      const now = new Date().toLocaleString('zh-CN', {hour12: false});
+      const record = {
+        code: formMode === 'edit' ? sourceRecord.code : generateActivityCode(new Set([...saved, ...window.busSecondCashbackDefaults].map(item => item.code))),
+        name: $('#actName').value.trim(),
+        channels,
+        status: document.querySelector('input[name="status"]:checked').parentElement.textContent.trim(),
+        priority: Number($('#priority').value),
+        beginAt: $('#beginAt').value,
+        endAt: $('#endAt').value,
+        tags: tagLimitEnabled ? parseTags() : [],
+        deliveryLimits: {
+          tagEnabled: tagLimitEnabled,
+          abEnabled: $('#abEnabled').checked,
+          experimentCode: $('#abEnabled').checked ? $('#experimentCode').value.trim() : '',
+          experimentGroup: $('#abEnabled').checked ? $('#experimentGroup').value : ''
+        },
+        countLimits: {
+          enabled: countLimitDimensions.length > 0,
+          dimensions: countLimitDimensions
+        },
+        monthlyLimit: monthlyLimitEnabled ? Number($('#monthlyLimit').value) : null,
+        validHours: Number($('#validHours').value),
+        giftName,
+        giftDescription,
+        couponPackageValue: Number($('#couponPackageValue').value),
+        couponActivity: $('#couponActivity').value.trim(),
+        cashbackRatio: Number($('#cashbackRatio').value),
+        cashbackCap: Number($('#cashbackCap').value),
+        cashbackActivity: $('#cashbackActivity').value.trim(),
+        installments: rows.map(row => ({...row})),
+        popupActivityText: $('#popupActivityText').value.trim(),
+        ruleDescription: $('#ruleDescription').textContent.trim() ? sanitizeRichText($('#ruleDescription').innerHTML) : '',
+        updatedAt: now
+      };
+      const changes = formMode === 'edit' ? configChanges(sourceRecord, record) : [];
+      if (formMode === 'edit' && !changes.length) return toast('配置未变更，无需保存');
+      const oldIndex = saved.findIndex(item => item.code === record.code);
+      if (oldIndex >= 0) saved[oldIndex] = record; else saved.unshift(record);
+      localStorage.setItem('busSecondCashbackActivities', JSON.stringify(saved));
+      const operator = '原型操作员（演示）';
+      if (formMode === 'edit') {
+        appendActivityLogs([{code:record.code, action:'编辑', operator, at:now, changes}]);
+      } else if (formMode === 'copy') {
+        appendActivityLogs([
+          {code:sourceRecord.code, action:'复制', operator, at:now, detail:`复制生成活动 ${record.code}`, changes:configChanges(sourceRecord, record)},
+          {code:record.code, action:'创建', operator, at:now, detail:`由活动 ${sourceRecord.code} 复制创建`, changes:configChanges({}, record)}
+        ]);
+      } else {
+        appendActivityLogs([{code:record.code, action:'创建', operator, at:now, detail:'新建活动配置', changes:configChanges({}, record)}]);
+      }
+      toast('保存成功，即将返回活动配置管理');
+      setTimeout(() => { window.location.href = './activity-list.html'; }, 700);
+    });
+    const hasSourceMode = ['view', 'edit', 'copy'].includes(formMode);
+    if (hasSourceMode) {
+      const record = sourceRecord;
+      if (record) {
+        const readOnly = formMode === 'view';
+        document.title = `${record.name} - ${readOnly ? '活动查看' : formMode === 'edit' ? '活动编辑' : '复制活动'}`;
+        $('#pageMode').textContent = readOnly ? '查看活动' : formMode === 'edit' ? '编辑活动' : '复制活动';
+        $('#readOnlyNote').textContent = readOnly ? '当前为活动查看模式，全部配置不可修改。' : formMode === 'edit' ? '编辑活动保留原活动Code；修改仅影响后续新参与，已有资格和奖励继续使用原配置快照；次数限制按既定实时校验口径执行。' : '已复制原活动配置，活动名称添加“复制”；保存后生成新的活动Code。';
+        $('#readOnlyNote').classList.remove('hidden');
+        if (formMode !== 'copy') {
+          $('#activityCodeRow').classList.remove('hidden');
+          $('#activityCode').value = record.code;
+        }
+        $('#actName').value = formMode === 'copy' ? [...(record.name || '')].slice(0, 38).join('') + '复制' : record.name || '';
+        $('#priority').value = record.priority ?? '';
+        $('#beginAt').value = record.beginAt || '';
+        $('#endAt').value = record.endAt || '';
+        document.querySelectorAll('input[name="channels"]').forEach(input => { input.checked = (record.channels || []).includes(input.value); });
+        document.querySelectorAll('input[name="status"]').forEach(input => { input.checked = input.parentElement.textContent.trim() === record.status; });
+        const tagEnabled = record.deliveryLimits?.tagEnabled ?? (record.tags || []).length > 0;
+        $('#tagEnabled').checked = tagEnabled;
+        $('#tagFields').classList.toggle('hidden', !tagEnabled);
+        $('#productTags').value = (record.tags || []).join(',');
+        renderTags();
+        const abEnabled = record.deliveryLimits?.abEnabled ?? false;
+        $('#abEnabled').checked = abEnabled;
+        $('#abFields').classList.toggle('hidden', !abEnabled);
+        $('#experimentCode').value = record.deliveryLimits?.experimentCode || '';
+        $('#experimentGroup').value = record.deliveryLimits?.experimentGroup || '';
+        const monthlyDimension = record.countLimits?.enabled ? record.countLimits.dimensions?.find(item => item.type === 'MONTHLY_PER_USER') : null;
+        const monthlyLimit = record.countLimits ? monthlyDimension?.value : record.monthlyLimit;
+        $('#monthlyLimitDimension').checked = monthlyLimit != null;
+        $('#monthlyLimitFields').classList.toggle('hidden', monthlyLimit == null);
+        $('#monthlyLimit').value = monthlyLimit ?? '';
+        $('#validHours').value = record.validHours ?? '';
+        $('#giftName').value = record.giftName || '';
+        $('#giftDescription').value = record.giftDescription || '';
+        $('#couponPackageValue').value = record.couponPackageValue ?? '';
+        $('#couponActivity').value = record.couponActivity || '';
+        $('#cashbackRatio').value = record.cashbackRatio ?? 100;
+        $('#cashbackCap').value = record.cashbackCap ?? '';
+        updateCashbackCapDisplay();
+        if (readOnly) $('#cashbackCapConfirmRow').classList.add('hidden');
+        $('#cashbackActivity').value = record.cashbackActivity || '';
+        rows = (record.installments || []).map(item => ({...item}));
+        renderRows();
+        $('#popupActivityText').value = record.popupActivityText || '';
+        $('#ruleDescription').innerHTML = sanitizeRichText(record.ruleDescription || '');
+        if (readOnly) {
+          $('#ruleDescription').contentEditable = 'false';
+          $('#activityForm').classList.add('read-only');
+          $('#activityForm').querySelectorAll('input, select, textarea, button').forEach(control => { if (control.id !== 'closeBtn') control.disabled = true; });
+          $('#saveBtn').classList.add('hidden');
+        } else {
+          $('#saveBtn').textContent = formMode === 'edit' ? '保存修改' : '确认复制';
+        }
+        $('#closeBtn').textContent = '返回列表';
+        document.querySelector('.side a.active')?.classList.remove('active');
+        document.querySelector('.side a[href="./activity-list.html"]')?.classList.add('active');
+      } else {
+        $('#pageMode').textContent = '活动不存在';
+        $('#readOnlyNote').textContent = '未找到该活动配置，请返回活动配置管理页。';
+        $('#readOnlyNote').classList.remove('hidden');
+        $('#cashbackCapConfirmRow').classList.add('hidden');
+        $('#activityForm').classList.add('read-only');
+        $('#activityForm').querySelectorAll('input, select, textarea, button').forEach(control => { if (control.id !== 'closeBtn') control.disabled = true; });
+        $('#saveBtn').classList.add('hidden');
+        $('#closeBtn').textContent = '返回列表';
+      }
+    }
+    $('#closeBtn').addEventListener('click', () => { if (hasSourceMode) window.location.href = './activity-list.html'; else toast('原型模式：已触发关闭操作'); });
+  </script>
+</body>
+</html>
