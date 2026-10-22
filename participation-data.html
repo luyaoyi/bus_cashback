@@ -34,6 +34,14 @@
       {recordNo:'P202610160006',activity:'BUS_SECOND_CASHBACK_A',member:'10006668',firstOrder:'B202610160088',firstCreated:'2026-10-16 08:10:00',firstStatus:'已支付',secondOrder:'B202610170176',secondStatus:'已出行',secondTravelAt:'2026-10-17 08:00:00',qualification:'已完成',expireAt:'2026-10-18 08:11:03',estimate:30,actual:30,couponStatus:'发放成功',coupons:[{name:'汽车票5元券',status:'发放成功',voucherNo:'CP202610160006501'},{name:'汽车票8折券',status:'发放成功',voucherNo:'CP202610160006802'}],rewardStatus:'部分领取',updatedAt:'2026-10-20 10:05:22',progress:['第一单已创建','资格已激活','第二单已占用','第二单已出行','奖励领取中'],snapshot:'Tag=BUS_HOME；资格48小时；返现上限30元；分期30%/30%/40%',rewards:[{seq:1,amount:9,window:'2026-10-18 08:00:00（含）～ 2026-10-21 08:00:00（不含）',status:'已领取',payoutStatus:'打款成功',voucherNo:'CS202610160006001',claimAt:'2026-10-18 09:20:11'},{seq:2,amount:9,window:'2026-10-21 08:00:00（含）～ 2026-10-24 08:00:00（不含）',status:'待领取',payoutStatus:'未打款',claimAt:'-'},{seq:3,amount:12,window:'2026-10-24 08:00:00（含）～ 2026-10-28 08:00:00（不含）',status:'待生效',payoutStatus:'未打款',claimAt:'-'}]},
       {recordNo:'P202610150002',activity:'BUS_SECOND_CASHBACK_B',member:'10001239',firstOrder:'B202610150039',firstCreated:'2026-10-15 17:40:14',firstStatus:'已取消',secondOrder:'',secondStatus:'-',qualification:'已取消',expireAt:'-',estimate:null,actual:null,couponStatus:'未发放',coupons:[],rewardStatus:'未生成',updatedAt:'2026-10-15 18:02:09',progress:['第一单已创建','第一单已取消'],snapshot:'Tag=BUS_RETURN；资格72小时；返现上限20元；分期50%/50%',rewards:[]}
     ];
+    const couponDetails={
+      CP202610200001501:{validFrom:'2026-10-20 09:12:08',validTo:'2026-11-19 23:59:59',couponState:'未使用'},
+      CP202610200001802:{validFrom:'2026-10-20 09:12:08',validTo:'2026-11-19 23:59:59',couponState:'未使用'},
+      CP202610190018501:{validFrom:'2026-10-19 11:31:26',validTo:'2026-11-18 23:59:59',couponState:'未使用'},
+      CP202610160006501:{validFrom:'2026-10-16 08:11:03',validTo:'2026-11-15 23:59:59',couponState:'已使用'},
+      CP202610160006802:{validFrom:'2026-10-16 08:11:03',validTo:'2026-11-15 23:59:59',couponState:'未使用'}
+    };
+    records.forEach(r=>r.coupons.forEach(c=>Object.assign(c,couponDetails[c.voucherNo]||{})));
     const forceStorageKey='busSecondCashbackForcedRewards';
     let forceHistory={};
     try { forceHistory=JSON.parse(localStorage.getItem(forceStorageKey)||'{}'); } catch { forceHistory={}; }
@@ -55,13 +63,51 @@
       syncRewardStatus(r);
     });
     let visible=[...records];
-    const statusClass=s=>['已完成','已领完','发放成功','已领取','领取成功','打款成功'].includes(s)?'success':['待第二单占用','待第二单出行','待领取','部分领取'].includes(s)?'info':['待第一单支付','待生效','部分成功'].includes(s)?'warning':['已取消','领取失败','已失效'].includes(s)?'danger':'default';
+    const statusClass=s=>['已完成','已领完','发放成功','已领取','领取成功','打款成功','已使用'].includes(s)?'success':['待第二单占用','待第二单出行','待领取','部分领取','未使用'].includes(s)?'info':['待第一单支付','待生效','部分成功'].includes(s)?'warning':['已取消','领取失败','已失效','已过期'].includes(s)?'danger':'default';
     function render(){
       $('#recordBody').innerHTML=visible.map(r=>`<tr><td>${esc(r.recordNo)}</td><td>${esc(r.activity)}</td><td>${esc(r.member)}</td><td>${esc(r.firstOrder)}<br/><span class="muted">${esc(r.firstStatus)}</span></td><td>${r.secondOrder?esc(r.secondOrder):'-'}<br/><span class="muted">${esc(r.secondStatus)}</span></td><td><span class="status ${statusClass(r.qualification)}">${esc(r.qualification)}</span></td><td>${esc(r.expireAt)}</td><td>${money(r.estimate)} / ${money(r.actual)}</td><td><span class="status ${statusClass(r.couponStatus)}">${esc(r.couponStatus)}</span></td><td>${esc(r.updatedAt)}</td><td><button class="link-btn view" data-no="${esc(r.recordNo)}" type="button">详情</button></td></tr>`).join('');
       $('#countText').textContent=`共 ${visible.length} 条参与记录`;$('#empty').classList.toggle('hidden',visible.length>0);document.querySelector('.table-wrap').classList.toggle('hidden',visible.length===0);document.querySelectorAll('.view').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.no)));
     }
     function search(){const member=$('#qMember').value.trim(),activity=$('#qActivity').value.trim().toLowerCase(),first=$('#qFirst').value.trim(),second=$('#qSecond').value.trim(),qualification=$('#qQualification').value;visible=records.filter(r=>(!member||r.member.includes(member))&&(!activity||r.activity.toLowerCase().includes(activity))&&(!first||r.firstOrder.includes(first))&&(!second||r.secondOrder.includes(second))&&(!qualification||r.qualification===qualification));render();}
-    function openDetail(no){const r=records.find(x=>x.recordNo===no);if(!r)return;$('#detailBody').innerHTML=`<div class="section-title">活动进度</div><div class="progress">${r.progress.map((p,i)=>`<span class="node ${i===r.progress.length-1?'current':'done'}">${esc(p)}</span>${i<r.progress.length-1?'<span class="arrow">→</span>':''}`).join('')}</div><div class="section-title">订单与资格</div><dl class="detail-grid"><div class="detail-item"><dt>参与记录号</dt><dd>${esc(r.recordNo)}</dd></div><div class="detail-item"><dt>用户账号</dt><dd>${esc(r.member)}</dd></div><div class="detail-item"><dt>活动Code</dt><dd>${esc(r.activity)}</dd></div><div class="detail-item"><dt>第一单</dt><dd>${esc(r.firstOrder)}（${esc(r.firstStatus)}）</dd></div><div class="detail-item"><dt>第一单创建时间</dt><dd>${esc(r.firstCreated)}</dd></div><div class="detail-item"><dt>第二单</dt><dd>${r.secondOrder?`${esc(r.secondOrder)}（${esc(r.secondStatus)}）`:'-'}</dd></div><div class="detail-item"><dt>第二单出行时间</dt><dd>${r.secondTravelAt?esc(r.secondTravelAt):"-"}</dd></div><div class="detail-item"><dt>资格状态</dt><dd>${esc(r.qualification)}</dd></div><div class="detail-item"><dt>资格有效期</dt><dd>${esc(r.expireAt)}</dd></div><div class="detail-item"><dt>预计/实际返现</dt><dd>${money(r.estimate)} / ${money(r.actual)}</dd></div></dl><div class="section-title">参与配置快照</div><div>${esc(r.snapshot)}</div><div class="section-title">代金券发放</div><div><span class="status ${statusClass(r.couponStatus)}">${esc(r.couponStatus)}</span></div>${r.coupons.length?`<div class="table-wrap"><table style="min-width:620px"><thead><tr><th>奖品名称</th><th>发放状态</th><th>券号</th></tr></thead><tbody>${r.coupons.map(c=>`<tr><td>${esc(c.name)}</td><td><span class="status ${statusClass(c.status)}">${esc(c.status)}</span></td><td>${esc(c.voucherNo)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="muted" style="margin-top:10px">无成功发放的代金券</div>'}<div class="section-title">分次返现奖励</div><div class="muted">强制流转仅修改原型中的奖励状态，不触发真实领取或打款。</div>${r.rewards.length?`<div class="table-wrap"><table style="min-width:1200px"><thead><tr><th>期次</th><th>金额</th><th>领取时间</th><th>领取状态</th><th>打款状态</th><th>券号</th><th>领取成功时间</th><th>强制流转时间</th><th>操作</th></tr></thead><tbody>${r.rewards.map(x=>`<tr><td>第${x.seq}期</td><td>${x.amount}元</td><td>${esc(x.window)}</td><td><span class="status ${statusClass(x.status)}">${esc(x.status)}</span></td><td><span class="status ${statusClass(x.payoutStatus)}">${esc(x.payoutStatus)}</span></td><td>${['已领取','领取成功'].includes(x.status)&&x.voucherNo?esc(x.voucherNo):'-'}</td><td>${esc(x.claimAt)}</td><td>${x.forceAt?esc(x.forceAt):"-"}</td><td>${canForceReward(x)?`<button class="link-btn force-btn" type="button" data-force-record="${esc(r.recordNo)}" data-force-seq="${x.seq}">强制流转</button>`:"-"}</td></tr>`).join('')}</tbody></table></div>`:'尚未生成返现奖励'}`;$('#detailModal').classList.remove('hidden');}
+    function openDetail(no){
+      const r=records.find(x=>x.recordNo===no);
+      if(!r)return;
+      const couponTable=r.coupons.length
+        ? `<div class="table-wrap"><table style="min-width:1120px">
+            <thead><tr><th>奖品名称</th><th>发放状态</th><th>券号</th><th>有效期开始时间</th><th>有效期结束时间</th><th>券状态</th></tr></thead>
+            <tbody>${r.coupons.map(c=>`<tr><td>${esc(c.name)}</td><td><span class="status ${statusClass(c.status)}">${esc(c.status)}</span></td><td>${esc(c.voucherNo||'-')}</td><td>${esc(c.validFrom||'-')}</td><td>${esc(c.validTo||'-')}</td><td>${c.couponState?`<span class="status ${statusClass(c.couponState)}">${esc(c.couponState)}</span>`:'-'}</td></tr>`).join('')}</tbody>
+          </table></div>`
+        : '<div class="muted" style="margin-top:10px">无成功发放的代金券</div>';
+      const rewardTable=r.rewards.length
+        ? `<div class="table-wrap"><table style="min-width:1200px">
+            <thead><tr><th>期次</th><th>金额</th><th>领取时间</th><th>领取状态</th><th>打款状态</th><th>券号</th><th>领取成功时间</th><th>强制流转时间</th><th>操作</th></tr></thead>
+            <tbody>${r.rewards.map(x=>`<tr><td>第${x.seq}期</td><td>${x.amount}元</td><td>${esc(x.window)}</td><td><span class="status ${statusClass(x.status)}">${esc(x.status)}</span></td><td><span class="status ${statusClass(x.payoutStatus)}">${esc(x.payoutStatus)}</span></td><td>${['已领取','领取成功'].includes(x.status)&&x.voucherNo?esc(x.voucherNo):'-'}</td><td>${esc(x.claimAt)}</td><td>${x.forceAt?esc(x.forceAt):'-'}</td><td>${canForceReward(x)?`<button class="link-btn force-btn" type="button" data-force-record="${esc(r.recordNo)}" data-force-seq="${x.seq}">强制流转</button>`:'-'}</td></tr>`).join('')}</tbody>
+          </table></div>`
+        : '尚未生成返现奖励';
+      $('#detailBody').innerHTML=`
+        <div class="section-title">活动进度</div>
+        <div class="progress">${r.progress.map((p,i)=>`<span class="node ${i===r.progress.length-1?'current':'done'}">${esc(p)}</span>${i<r.progress.length-1?'<span class="arrow">→</span>':''}`).join('')}</div>
+        <div class="section-title">订单与资格</div>
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>参与记录号</dt><dd>${esc(r.recordNo)}</dd></div>
+          <div class="detail-item"><dt>用户账号</dt><dd>${esc(r.member)}</dd></div>
+          <div class="detail-item"><dt>活动Code</dt><dd>${esc(r.activity)}</dd></div>
+          <div class="detail-item"><dt>第一单</dt><dd>${esc(r.firstOrder)}（${esc(r.firstStatus)}）</dd></div>
+          <div class="detail-item"><dt>第一单创建时间</dt><dd>${esc(r.firstCreated)}</dd></div>
+          <div class="detail-item"><dt>第二单</dt><dd>${r.secondOrder?`${esc(r.secondOrder)}（${esc(r.secondStatus)}）`:'-'}</dd></div>
+          <div class="detail-item"><dt>第二单出行时间</dt><dd>${r.secondTravelAt?esc(r.secondTravelAt):'-'}</dd></div>
+          <div class="detail-item"><dt>资格状态</dt><dd>${esc(r.qualification)}</dd></div>
+          <div class="detail-item"><dt>资格有效期</dt><dd>${esc(r.expireAt)}</dd></div>
+          <div class="detail-item"><dt>预计/实际返现</dt><dd>${money(r.estimate)} / ${money(r.actual)}</dd></div>
+        </dl>
+        <div class="section-title">参与配置快照</div><div>${esc(r.snapshot)}</div>
+        <div class="section-title">代金券发放</div><div><span class="status ${statusClass(r.couponStatus)}">${esc(r.couponStatus)}</span></div>
+        ${couponTable}
+        <div class="section-title">分次返现奖励</div>
+        <div class="muted">强制流转仅修改原型中的奖励状态，不触发真实领取或打款。</div>
+        ${rewardTable}`;
+      $('#detailModal').classList.remove('hidden');
+    }
     let pendingForce=null;
     function forceReward(recordNo,seq){
       const r=records.find(item=>item.recordNo===recordNo);
