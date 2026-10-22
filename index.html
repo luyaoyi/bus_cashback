@@ -177,7 +177,7 @@
                 <div class="form-row"><label class="label required">活动名称</label><div class="control"><input id="actName" type="text" maxlength="40" placeholder="请输入活动名称" /></div></div>
                 <div class="form-row"><label class="label required">业务类型</label><div class="control inline"><label class="radio"><input type="radio" checked />汽车票</label></div></div>
                 <div class="form-row"><label class="label required">渠道限制</label><div class="control inline"><label class="checkbox"><input name="channels" type="checkbox" value="852" />微信主小程序（852）</label><label class="checkbox"><input name="channels" type="checkbox" value="434" />同程APP安卓（434）</label><label class="checkbox"><input name="channels" type="checkbox" value="433" />同程APP IOS（433）</label><label class="checkbox"><input name="channels" type="checkbox" value="10212" />鸿蒙APP（10212）</label></div></div>
-                <div class="form-row"><label class="label required">优先级</label><div class="control inline"><input id="priority" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,3}" maxlength="4" value="100" aria-label="优先级，1到9999的整数" /><span>1～9999 的整数；数值越大优先级越高</span></div></div>
+                <div class="form-row"><label class="label required">优先级</label><div class="control inline"><input id="priority" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,3}" maxlength="4" aria-label="优先级，1到9999的整数" /><span>1～9999 的整数；数值越大优先级越高</span></div></div>
                 <div class="form-row"><label class="label required">活动投放时间</label><div class="control inline"><input id="beginAt" type="datetime-local" /><span>至</span><input id="endAt" type="datetime-local" /></div></div>
                 <div class="form-row"><label class="label required">活动状态</label><div class="control inline"><label class="radio"><input name="status" type="radio" checked />有效</label><label class="radio"><input name="status" type="radio" />无效</label></div></div>
               </div>
@@ -212,7 +212,7 @@
             <section class="card changed" id="qualification">
               <div class="card-header"><span>二单资格配置</span><span class="badge">新增</span></div>
               <div class="card-body">
-                <div class="form-row"><label class="label required">资格有效时长</label><div class="control inline"><span>第一单支付成功后</span><input id="validHours" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" value="24" aria-label="资格有效时长，1到999的整数小时" /><span>小时内创建第二单</span></div></div>
+                <div class="form-row"><label class="label required">资格有效时长</label><div class="control inline"><span>第一单支付成功后</span><input id="validHours" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" aria-label="资格有效时长，1到999的整数小时" /><span>小时内创建第二单</span></div></div>
                 <div class="note">第一单创单生成待支付资格；支付成功后激活。第二单在有效期内创单即占用资格，占用后不再受原截止时间影响。</div>
                 <div class="form-row"><label class="label required">礼包名称</label><div class="control"><input id="giftName" type="text" placeholder="请输入1～10个字符" /></div></div>
                 <div class="form-row"><label class="label required">礼包说明</label><div class="control"><input id="giftDescription" type="text" placeholder="请输入1～100个字符" /></div></div>
@@ -224,8 +224,8 @@
             <section class="card changed" id="cashback">
               <div class="card-header"><span>返现配置</span><span class="badge">调整</span></div>
               <div class="card-body">
-                <div class="form-row"><label class="label required">返现比例</label><div class="control inline"><input id="cashbackRatio" type="number" min="1" max="100" step="1" value="100" /><span>%</span></div></div>
-                <div class="form-row"><label class="label required">返现金额上限</label><div class="control inline"><input id="cashbackCap" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" value="30" aria-label="返现金额上限，1到500的整数元" /><span>元（1～500的整数）</span><span id="cashbackCapChinese" class="money-chinese" aria-live="polite"></span></div></div>
+                <div class="form-row"><label class="label required">返现比例</label><div class="control inline"><input id="cashbackRatio" type="number" min="1" max="100" step="1" /><span>%</span></div></div>
+                <div class="form-row"><label class="label required">返现金额上限</label><div class="control inline"><input id="cashbackCap" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" aria-label="返现金额上限，1到500的整数元" /><span>元（1～500的整数）</span><span id="cashbackCapChinese" class="money-chinese" aria-live="polite"></span></div></div>
                 <div class="form-row" id="cashbackCapConfirmRow"><label class="label required">确认返现金额上限</label><div class="control"><div class="inline"><input id="cashbackCapConfirm" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,2}" maxlength="3" placeholder="请再次输入1～500的整数" aria-label="确认返现金额上限，1到500的整数元" /><span>元</span><span id="cashbackCapMatch" class="ratio-status" aria-live="polite"></span></div><div class="tip info">确认金额必须与返现金额上限一致，才允许保存。</div></div></div>
                 <div class="note">返现总金额＝min（⌊第二单票价 × 返现比例⌋，返现金额上限）。第二单票价由汽车票订单系统传入，计算结果按元向下取整。</div>
                 <div class="form-row"><label class="label required">返现金活动</label><div class="control"><input id="cashbackActivity" type="text" placeholder="请输入营销平台返现金活动Code" /><div class="tip info">用户每次主动领取一笔奖励，定制活动按当笔金额调用该返现金活动。请选择绑定动态金额现金商品的返现金活动Code。</div></div></div>
@@ -371,11 +371,7 @@
       toast('原型模式：实验分组获取成功');
     });
 
-    const defaultRows = [
-      { ratio: 30, start: 1, end: 3 },
-      { ratio: 30, start: 4, end: 6 },
-      { ratio: 40, start: 7, end: 10 }
-    ];
+    const defaultRows = Array.from({length: 3}, () => ({ratio: null, start: null, end: null}));
     let rows = defaultRows.map(item => ({...item}));
 
     const updateRatioStatus = () => {
@@ -408,7 +404,7 @@
     };
     $('#addInstallment').addEventListener('click', () => {
       if (rows.length >= 5) return toast('最多配置5期奖励');
-      rows.push({ ratio: null, start: 0, end: 0 });
+      rows.push({ ratio: null, start: null, end: null });
       renderRows();
     });
     renderRows();
