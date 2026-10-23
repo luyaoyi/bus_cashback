@@ -176,7 +176,7 @@
                 <div id="activityCodeRow" class="form-row hidden"><label class="label">活动Code</label><div class="control"><input id="activityCode" type="text" readonly /></div></div>
                 <div class="form-row"><label class="label required">活动名称</label><div class="control"><input id="actName" type="text" maxlength="40" placeholder="请输入活动名称" /></div></div>
                 <div class="form-row"><label class="label required">业务类型</label><div class="control inline"><label class="radio"><input type="radio" checked />汽车票</label></div></div>
-                <div class="form-row"><label class="label required">渠道限制</label><div class="control inline"><label class="checkbox"><input name="channels" type="checkbox" value="852" />微信主小程序（852）</label><label class="checkbox"><input name="channels" type="checkbox" value="434" />同程APP安卓（434）</label><label class="checkbox"><input name="channels" type="checkbox" value="433" />同程APP IOS（433）</label><label class="checkbox"><input name="channels" type="checkbox" value="10212" />鸿蒙APP（10212）</label></div></div>
+                <div class="form-row"><label class="label required">渠道限制</label><div class="control inline"><label class="checkbox"><input name="channels" type="checkbox" value="852" />微信主小程序（852）</label></div></div>
                 <div class="form-row"><label class="label required">优先级</label><div class="control inline"><input id="priority" type="text" inputmode="numeric" pattern="[1-9][0-9]{0,3}" maxlength="4" aria-label="优先级，1到9999的整数" /><span>1～9999 的整数；数值越大优先级越高</span></div></div>
                 <div class="form-row"><label class="label required">活动投放时间</label><div class="control inline"><input id="beginAt" type="datetime-local" /><span>至</span><input id="endAt" type="datetime-local" /></div></div>
                 <div class="form-row"><label class="label required">活动状态</label><div class="control inline"><label class="radio"><input name="status" type="radio" checked />有效</label><label class="radio"><input name="status" type="radio" />无效</label></div></div>
@@ -473,7 +473,7 @@
       if (formMode === 'view' || (formMode !== 'create' && !sourceRecord)) return toast('当前页面不可保存活动');
       if (!requireText('#actName', '请填写活动名称')) return;
       const channels = [...document.querySelectorAll('input[name="channels"]:checked')].map(input => input.value);
-      if (!channels.length) return toast('请至少选择一个渠道');
+      if (!channels.includes('852')) return toast('请选择微信主小程序（852）');
       if (!Number.isInteger(Number($('#priority').value)) || Number($('#priority').value) < 1 || Number($('#priority').value) > 9999) return toast('优先级需为1～9999的整数');
       if (!$('#beginAt').value || !$('#endAt').value || $('#beginAt').value >= $('#endAt').value) return toast('请填写正确的活动投放时间');
       const tagLimitEnabled = $('#tagEnabled').checked;
