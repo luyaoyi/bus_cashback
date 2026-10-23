@@ -186,15 +186,12 @@
             <section class="card changed" id="delivery">
               <div class="card-header"><span>投放限制</span><span class="badge">新增/调整</span></div>
               <div class="card-body">
-                <div class="form-row"><label class="label">投放限制</label><div class="control inline"><label class="checkbox"><input id="tagEnabled" type="checkbox" />产品Tag</label><label class="checkbox"><input id="abEnabled" type="checkbox" />AB实验分组</label></div></div>
-                <div id="tagFields" class="conditional hidden">
-                  <div class="form-row"><label class="label required">产品Tag</label><div class="control"><input id="productTags" type="text" maxlength="100" placeholder="例如：BUS_HOME,BUS_RETURN,汽车票频道" /><div class="tip info">输入内容合计最多100字符；支持配置多个Tag，以英文逗号分隔；完全匹配、区分大小写，保存时去除首尾空格并去重。</div><div id="tagPreview" class="tags"></div></div></div>
-                </div>
+                <div class="form-row"><label class="label">投放限制</label><div class="control inline"><label class="checkbox"><input id="abEnabled" type="checkbox" />AB实验分组</label></div></div>
                 <div id="abFields" class="conditional hidden">
                   <div class="form-row"><label class="label required">实验编号</label><div class="control inline"><input id="experimentCode" type="text" placeholder="请输入实验编号" /><button type="button" id="loadGroups">获取实验分组</button></div></div>
                   <div class="form-row"><label class="label required">可参与分组</label><div class="control"><select id="experimentGroup"><option value="">请选择实验分组</option><option>A组</option><option>B组</option><option>实验组</option></select></div></div>
                 </div>
-                <div class="note">未选择的投放限制不参与资格校验；未配置产品Tag时，活动查询的Tag匹配口径待业务确认。</div>
+                <div class="note">未选择 AB 实验分组时，不按实验分组校验参与资格。</div>
               </div>
             </section>
 
@@ -250,6 +247,7 @@
             <section class="card" id="display">
               <div class="card-header">前端展示配置</div>
               <div class="card-body">
+                <div class="form-row"><label class="label required">返现展示Tag</label><div class="control"><input id="cashbackDisplayTags" type="text" maxlength="100" placeholder="例如：BUS_HOME,BUS_RETURN" /><div class="tip info">必填；多个 Tag 用英文逗号分隔，输入内容最多100字符；仅用于前端展示返现，不作为投放限制。</div><div id="displayTagPreview" class="tags"></div></div></div>
                 <div class="form-row"><label class="label">弹窗活动文案</label><div class="control"><input id="popupActivityText" type="text" maxlength="100" placeholder="请输入弹窗活动文案（非必填，最多100字符）" /></div></div>
                 <div class="form-row"><label class="label">规则说明</label><div class="control"><div class="rich-text"><div class="rich-text-toolbar" aria-label="规则说明格式工具栏"><button type="button" data-format="bold" title="加粗"><b>B</b></button><button type="button" data-format="italic" title="斜体"><i>I</i></button><button type="button" data-format="underline" title="下划线"><u>U</u></button><button type="button" data-format="insertUnorderedList" title="无序列表">• 列表</button><button type="button" data-format="insertOrderedList" title="有序列表">1. 列表</button></div><div id="ruleDescription" class="rich-text-editor" contenteditable="true" role="textbox" aria-label="规则说明" aria-multiline="true" data-placeholder="请输入活动规则说明（非必填）"></div></div><div class="tip info">支持加粗、斜体、下划线和列表；可不填写。</div></div></div>
               </div>
@@ -285,13 +283,13 @@
     };
 
     const parseTags = () => {
-      const raw = $('#productTags').value;
+      const raw = $('#cashbackDisplayTags').value;
       return [...new Set(raw.split(',').map(tag => tag.trim()).filter(Boolean))];
     };
     const renderTags = () => {
-      $('#tagPreview').innerHTML = parseTags().map(tag => `<span class="tag">${tag.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`).join('');
+      $('#displayTagPreview').innerHTML = parseTags().map(tag => `<span class="tag">${tag.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`).join('');
     };
-    $('#productTags').addEventListener('input', renderTags);
+    $('#cashbackDisplayTags').addEventListener('input', renderTags);
     const sanitizeRichText = html => {
       const template = document.createElement('template');
       template.innerHTML = html;
@@ -319,9 +317,6 @@
       document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
     });
 
-    $('#tagEnabled').addEventListener('change', event => {
-      $('#tagFields').classList.toggle('hidden', !event.target.checked);
-    });
     $('#abEnabled').addEventListener('change', event => {
       $('#abFields').classList.toggle('hidden', !event.target.checked);
     });
@@ -434,7 +429,7 @@
       return {
         name: item.name || '', channels: item.channels || [], status: item.status || '', priority: item.priority,
         beginAt: item.beginAt || '', endAt: item.endAt || '',
-        tagEnabled: item.deliveryLimits?.tagEnabled ?? (item.tags || []).length > 0, tags: item.tags || [],
+        displayTags: item.displayTags || [],
         abEnabled: item.deliveryLimits?.abEnabled ?? false,
         experimentCode: item.deliveryLimits?.experimentCode || '', experimentGroup: item.deliveryLimits?.experimentGroup || '',
         monthlyLimit: item.countLimits ? monthlyDimension?.value ?? null : item.monthlyLimit ?? null,
@@ -447,7 +442,7 @@
     };
     const auditLabels = {
       name:'活动名称', channels:'渠道限制', status:'活动状态', priority:'优先级', beginAt:'投放开始时间', endAt:'投放结束时间',
-      tagEnabled:'产品Tag限制', tags:'产品Tag', abEnabled:'AB分组限制', experimentCode:'实验编号', experimentGroup:'可参与分组',
+      displayTags:'返现展示Tag', abEnabled:'AB分组限制', experimentCode:'实验编号', experimentGroup:'可参与分组',
       monthlyLimit:'每人每月参与次数', validHours:'资格有效时长', giftName:'礼包名称', giftDescription:'礼包说明',
       couponPackageValue:'礼包价值', couponActivity:'礼包发券活动', cashbackRatio:'返现比例', cashbackCap:'返现金额上限',
       cashbackActivity:'返现金活动', installments:'分次领取配置', popupActivityText:'弹窗活动文案', ruleDescription:'规则说明'
@@ -476,11 +471,10 @@
       if (!channels.includes('852')) return toast('请选择微信主小程序（852）');
       if (!Number.isInteger(Number($('#priority').value)) || Number($('#priority').value) < 1 || Number($('#priority').value) > 9999) return toast('优先级需为1～9999的整数');
       if (!$('#beginAt').value || !$('#endAt').value || $('#beginAt').value >= $('#endAt').value) return toast('请填写正确的活动投放时间');
-      const tagLimitEnabled = $('#tagEnabled').checked;
-      const rawTags = $('#productTags').value;
-      if (tagLimitEnabled && !rawTags.trim()) return toast('请选择产品Tag后配置至少一个Tag');
-      if (tagLimitEnabled && [...rawTags].length > 100) return toast('产品Tag输入内容最多100字符');
-      if (tagLimitEnabled && rawTags.split(',').some(tag => !tag.trim())) return toast('产品Tag中存在空值，请检查逗号位置');
+      const rawTags = $('#cashbackDisplayTags').value;
+      if (!rawTags.trim()) return toast('请填写返现展示Tag');
+      if ([...rawTags].length > 100) return toast('返现展示Tag输入内容最多100字符');
+      if (rawTags.split(',').some(tag => !tag.trim())) return toast('返现展示Tag中存在空值，请检查逗号位置');
       if ($('#abEnabled').checked && (!$('#experimentCode').value.trim() || !$('#experimentGroup').value)) return toast('请完善AB实验配置');
       if ($('#monthlyLimitDimension').checked && (!Number.isInteger(Number($('#monthlyLimit').value)) || Number($('#monthlyLimit').value) < 1 || Number($('#monthlyLimit').value) > 99)) return toast('每人每月参与次数需为1～99的整数');
       if (!Number.isInteger(Number($('#validHours').value)) || Number($('#validHours').value) < 1 || Number($('#validHours').value) > 999) return toast('资格有效时长需为1～999的整数小时');
@@ -517,9 +511,8 @@
         priority: Number($('#priority').value),
         beginAt: $('#beginAt').value,
         endAt: $('#endAt').value,
-        tags: tagLimitEnabled ? parseTags() : [],
+        displayTags: parseTags(),
         deliveryLimits: {
-          tagEnabled: tagLimitEnabled,
           abEnabled: $('#abEnabled').checked,
           experimentCode: $('#abEnabled').checked ? $('#experimentCode').value.trim() : '',
           experimentGroup: $('#abEnabled').checked ? $('#experimentGroup').value : ''
@@ -580,10 +573,7 @@
         $('#endAt').value = record.endAt || '';
         document.querySelectorAll('input[name="channels"]').forEach(input => { input.checked = (record.channels || []).includes(input.value); });
         document.querySelectorAll('input[name="status"]').forEach(input => { input.checked = input.parentElement.textContent.trim() === record.status; });
-        const tagEnabled = record.deliveryLimits?.tagEnabled ?? (record.tags || []).length > 0;
-        $('#tagEnabled').checked = tagEnabled;
-        $('#tagFields').classList.toggle('hidden', !tagEnabled);
-        $('#productTags').value = (record.tags || []).join(',');
+        $('#cashbackDisplayTags').value = (record.displayTags || []).join(',');
         renderTags();
         const abEnabled = record.deliveryLimits?.abEnabled ?? false;
         $('#abEnabled').checked = abEnabled;
