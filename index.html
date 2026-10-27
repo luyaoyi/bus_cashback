@@ -248,6 +248,7 @@
               <div class="card-header">前端展示配置</div>
               <div class="card-body">
                 <div class="form-row"><label class="label required">返现展示Tag</label><div class="control"><input id="cashbackDisplayTags" type="text" maxlength="100" placeholder="例如：BUS_HOME,BUS_RETURN" /><div class="tip info">必填；多个 Tag 用英文逗号分隔，输入内容最多100字符；仅用于前端展示返现，不作为投放限制。</div><div id="displayTagPreview" class="tags"></div></div></div>
+                <div class="form-row"><label class="label">book15第一程活动入口文案</label><div class="control"><input id="book15FirstTripEntryText" type="text" maxlength="100" placeholder="请输入book15第一程活动入口文案（非必填，最多100字符）" /></div></div>
                 <div class="form-row"><label class="label">弹窗活动文案</label><div class="control"><input id="popupActivityText" type="text" maxlength="100" placeholder="请输入弹窗活动文案（非必填，最多100字符）" /></div></div>
                 <div class="form-row"><label class="label">规则说明</label><div class="control"><div class="rich-text"><div class="rich-text-toolbar" aria-label="规则说明格式工具栏"><button type="button" data-format="bold" title="加粗"><b>B</b></button><button type="button" data-format="italic" title="斜体"><i>I</i></button><button type="button" data-format="underline" title="下划线"><u>U</u></button><button type="button" data-format="insertUnorderedList" title="无序列表">• 列表</button><button type="button" data-format="insertOrderedList" title="有序列表">1. 列表</button></div><div id="ruleDescription" class="rich-text-editor" contenteditable="true" role="textbox" aria-label="规则说明" aria-multiline="true" data-placeholder="请输入活动规则说明（非必填）"></div></div><div class="tip info">支持加粗、斜体、下划线和列表；可不填写。</div></div></div>
               </div>
@@ -437,7 +438,7 @@
         couponPackageValue: item.couponPackageValue ?? null, couponActivity: item.couponActivity || '',
         cashbackRatio: item.cashbackRatio ?? 100, cashbackCap: item.cashbackCap,
         cashbackActivity: item.cashbackActivity || '', installments: item.installments || [],
-        popupActivityText: item.popupActivityText || '', ruleDescription: item.ruleDescription || ''
+        book15FirstTripEntryText: item.book15FirstTripEntryText || '', popupActivityText: item.popupActivityText || '', ruleDescription: item.ruleDescription || ''
       };
     };
     const auditLabels = {
@@ -445,7 +446,7 @@
       displayTags:'返现展示Tag', abEnabled:'AB分组限制', experimentCode:'实验编号', experimentGroup:'可参与分组',
       monthlyLimit:'每人每月参与次数', validHours:'资格有效时长', giftName:'礼包名称', giftDescription:'礼包说明',
       couponPackageValue:'礼包价值', couponActivity:'礼包发券活动', cashbackRatio:'返现比例', cashbackCap:'返现金额上限',
-      cashbackActivity:'返现金活动', installments:'分次领取配置', popupActivityText:'弹窗活动文案', ruleDescription:'规则说明'
+      cashbackActivity:'返现金活动', installments:'分次领取配置', book15FirstTripEntryText:'book15第一程活动入口文案', popupActivityText:'弹窗活动文案', ruleDescription:'规则说明'
     };
     const auditValue = value => {
       if (value == null || value === '') return '未配置';
@@ -490,6 +491,7 @@
       if (Number($('#cashbackCapConfirm').value) !== Number($('#cashbackCap').value)) return toast('确认返现金额上限与返现金额上限不一致');
       if (!requireText('#cashbackActivity', '请填写返现金活动Code')) return;
       if (rows.length < 1 || rows.length > 5) return toast('分次领取期数需为1～5期');
+      if ([...$('#book15FirstTripEntryText').value.trim()].length > 100) return toast('book15第一程活动入口文案最多100字符');
       if ([...$('#popupActivityText').value.trim()].length > 100) return toast('弹窗活动文案最多100字符');
       for (let i = 0; i < rows.length; i += 1) {
         const row = rows[i];
@@ -531,6 +533,7 @@
         cashbackCap: Number($('#cashbackCap').value),
         cashbackActivity: $('#cashbackActivity').value.trim(),
         installments: rows.map(row => ({...row})),
+        book15FirstTripEntryText: $('#book15FirstTripEntryText').value.trim(),
         popupActivityText: $('#popupActivityText').value.trim(),
         ruleDescription: $('#ruleDescription').textContent.trim() ? sanitizeRichText($('#ruleDescription').innerHTML) : '',
         updatedAt: now
@@ -597,6 +600,7 @@
         $('#cashbackActivity').value = record.cashbackActivity || '';
         rows = (record.installments || []).map(item => ({...item}));
         renderRows();
+        $('#book15FirstTripEntryText').value = record.book15FirstTripEntryText || '';
         $('#popupActivityText').value = record.popupActivityText || '';
         $('#ruleDescription').innerHTML = sanitizeRichText(record.ruleDescription || '');
         if (readOnly) {
