@@ -46,7 +46,7 @@
     let forceHistory={};
     try { forceHistory=JSON.parse(localStorage.getItem(forceStorageKey)||'{}'); } catch { forceHistory={}; }
     const rewardSucceeded=x=>['已领取','领取成功'].includes(x.status)&&x.payoutStatus==='打款成功';
-    const canForceReward=x=>!rewardSucceeded(x);
+    const canForceReward=x=>!(['已领取','领取成功'].includes(x.status)&&['打款成功','打款中'].includes(x.payoutStatus));
     const syncRewardStatus=r=>{
       if(!r.rewards.length)return;
       const successCount=r.rewards.filter(rewardSucceeded).length;
